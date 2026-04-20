@@ -1,0 +1,80 @@
+sequenceDiagram
+    box rgb(230, 245, 255) Client Side (Browser)
+        participant User
+        participant CSR as React Components<br/>(useSession, useUserRoles)
+    end
+    
+    box rgb(255, 243, 224) Server Side (NextJS)
+        participant MW as Middleware<br/>(middleware.ts)
+        participant SSR as Server Components<br/>(page.tsx)
+        participant API as API Routes<br/>(/api/verify-token)
+        participant NA as NextAuth<br/>(auth.ts)
+    end
+    
+    box rgb(232, 245, 233) External Services
+        participant MS as Microsoft Entra ID
+        participant Graph as MS Graph API
+    end
+
+    %% Initial Request - Server Side Rendering
+    User->>CSR: Navigate to /dashboard
+    CSR->>MW: GET /dashboard (with cookie)
+    
+    Note over MW: SERVER: Edge Runtime
+    MW->>MW: Check req.auth (decrypt cookie)
+    
+    alt Not Authenticated
+        MW->>CSR: 302 Redirect to /login
+        
+        Note over CSR: CLIENT: Login Page Rendered
+        User->>CSR: Click "Sign In"
+        CSR->>NA: GET /api/auth/signin
+        
+        Note over NA: SERVER: NextAuth Handler
+        NA->>CSR: 302 Redirect to Microsoft
+        CSR->>MS: Authorization Request (PKCE)
+        
+        Note over MS: EXTERNAL: User Authentication
+        MS->>CSR: Redirect with auth code
+        
+        CSR->>NA: GET /api/auth/callback/microsoft-entra-id
+        Note over NA: SERVER: Token Exchange
+        NA->>MS: POST /oauth2/v2.0/token
+        MS->>NA: access_token, id_token, refresh_token
+        
+        Note over NA: SERVER: JWT Callback<br/>Stores tokens in encrypted JWT
+        NA->>CSR: Set-Cookie: authjs.session-token
+        CSR->>MW: Redirect to /dashboard
+    end
+
+    %% Authenticated Request - SSR
+    Note over MW: SERVER: Middleware Check
+    MW->>MW: Validate session ✓
+    MW->>SSR: Allow request
+    
+    Note over SSR: SERVER: React Server Component
+    SSR->>SSR: Render initial HTML
+    SSR->>CSR: Send HTML + JS bundle
+    
+    %% Client Side Hydration & Role Fetching
+    Note over CSR: CLIENT: React Hydration
+    CSR->>CSR: useSession() - read session
+    CSR->>CSR: useUserRoles() - trigger fetch
+    
+    CSR->>API: GET /api/verify-token
+    Note over API: SERVER: API Route Handler
+    API->>API: auth() - get session
+    API->>API: decodeIdToken() with jose
+    
+    alt Groups in ID token
+        API->>API: checkUserGroups()
+    else Groups not in token (fallback)
+        API->>Graph: GET /me/memberOf
+        Note over Graph: EXTERNAL: Microsoft Graph
+        Graph->>API: Group memberships
+    end
+    
+    API->>CSR: { isAdmin, isViewer, groups }
+    
+    Note over CSR: CLIENT: Update UI based on roles
+    CSR->>CSR: Render admin/viewer content

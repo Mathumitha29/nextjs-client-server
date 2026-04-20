@@ -1,0 +1,35 @@
+flowchart TD
+    A[🔐 User Accesses Protected Route] --> B{Session Cookie Exists?}
+    B -->|No| C[Redirect to /login]
+    C --> D[User Clicks Sign In]
+    D --> E[Redirect to Microsoft Entra ID]
+    E --> F[User Enters Credentials]
+    F --> G{Authentication Success?}
+    G -->|No| H[Show Error]
+    G -->|Yes| I[Microsoft Returns Auth Code]
+    I --> J[NextAuth Exchanges Code for Tokens]
+    J --> K[Store tokens in encrypted JWT]
+    K --> L[Set HTTP-only Session Cookie]
+    L --> M[Redirect to Original URL]
+    
+    B -->|Yes| N{Token Expired?}
+    N -->|No| O[Allow Access]
+    N -->|Yes| P[Refresh Token]
+    P --> Q{Refresh Success?}
+    Q -->|Yes| O
+    Q -->|No| C
+    
+    O --> R[Call /api/verify-token]
+    R --> S{Groups in ID Token?}
+    S -->|Yes| T[Extract groups array]
+    S -->|No| U[Call MS Graph API]
+    U --> V[GET /me/memberOf]
+    V --> T
+    T --> W[Check ADMIN_GROUP_ID]
+    W --> X[Check VIEW_GROUP_ID]
+    X --> Y[Return isAdmin, isViewer]
+    
+    style A fill:#e1f5fe
+    style O fill:#c8e6c9
+    style C fill:#ffcdd2
+    style Y fill:#c8e6c9

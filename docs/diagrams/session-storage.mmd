@@ -1,0 +1,24 @@
+flowchart LR
+    subgraph Browser["🌐 Browser"]
+        Cookie["HTTP-only Cookie<br/>authjs.session-token"]
+    end
+    
+    subgraph JWT["🔐 Encrypted JWT Contents"]
+        AT["accessToken<br/>(MS Graph API)"]
+        IT["idToken<br/>(User info + groups)"]
+        RT["refreshToken<br/>(90 days rolling)"]
+        EXP["accessTokenExpires<br/>(timestamp)"]
+        USER["sub, name, email"]
+    end
+    
+    subgraph Server["⚙️ NextJS Server"]
+        Secret["NEXTAUTH_SECRET<br/>(AES-256-GCM encryption)"]
+        Auth["auth() function"]
+        MW["Middleware"]
+    end
+    
+    Cookie -->|Sent with every request| Server
+    Secret -->|Decrypts| Cookie
+    Cookie -.->|Contains| JWT
+    Auth -->|Reads| Cookie
+    MW -->|Validates| Cookie
