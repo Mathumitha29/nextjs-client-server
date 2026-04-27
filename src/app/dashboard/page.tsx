@@ -79,7 +79,11 @@ export default function DashboardPage() {
                 </a>
               )}
               {roles?.isAdmin && (
-                <a href="/admin" className="sso-button" style={{ maxWidth: 200 }}>
+                <a
+                  href={process.env.NEXT_PUBLIC_ADMIN_ZONE_URL ?? "/admin"}
+                  className="sso-button"
+                  style={{ maxWidth: 200 }}
+                >
                   Admin Panel
                 </a>
               )}

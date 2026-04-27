@@ -7,6 +7,14 @@ const nextConfig = {
       bodySizeLimit: '2mb',
     },
   },
+  async rewrites() {
+    return [
+      {
+        source: '/admin-zone/:path*',
+        destination: 'http://localhost:3001/admin-zone/:path*',
+      },
+    ];
+  },
 };
 
 export default nextConfig;

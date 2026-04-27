@@ -54,12 +54,12 @@ export function Header({ showNav = true }: HeaderProps) {
                 </Link>
               )}
               {roles?.isAdmin && (
-                <Link
-                  href="/admin"
-                  className={`nav-link ${pathname === "/admin" ? "active" : ""}`}
+                <a
+                  href={process.env.NEXT_PUBLIC_ADMIN_ZONE_URL ?? "/admin"}
+                  className="nav-link"
                 >
-                  Admin
-                </Link>
+                  Admin Zone
+                </a>
               )}
             </nav>
           )}

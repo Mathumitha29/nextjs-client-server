@@ -120,7 +120,7 @@ export const authConfig: NextAuthConfig = {
     async redirect({ url, baseUrl }) {
       // Allows relative callback URLs
       if (url.startsWith("/")) return `${baseUrl}${url}`;
-      // Allows callback URLs on the same origin
+      // Allows callback URLs on the same origin (covers /admin-zone/* via proxy)
       if (new URL(url).origin === baseUrl) return url;
       return baseUrl;
     },
