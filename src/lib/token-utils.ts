@@ -27,17 +27,10 @@ export async function decodeIdToken(idToken: string): Promise<TokenPayload | nul
 
     return payload as TokenPayload;
   } catch (error) {
-    console.error("Error decoding ID token:", error);
-
-    // If verification fails, try to decode without verification (for debugging)
-    // In production, you should always verify tokens
-    try {
-      const decoded = jose.decodeJwt(idToken);
-      console.warn("Token decoded without verification - use only for debugging");
-      return decoded as TokenPayload;
-    } catch {
-      return null;
-    }
+    console.error("Error verifying ID token:", error);
+    // Never fall back to unverified decode — a failed signature check means
+    // the token must be rejected outright.
+    return null;
   }
 }
 
