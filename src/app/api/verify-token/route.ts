@@ -59,7 +59,10 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    return NextResponse.json(groupResponse);
+    return NextResponse.json({
+      ...groupResponse,
+      accessToken: session.accessToken,
+    });
   } catch (error) {
     console.error("Error in verify-token API:", error);
     return NextResponse.json(
