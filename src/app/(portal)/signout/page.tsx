@@ -1,14 +1,16 @@
 "use client";
 
+import { useEffect } from "react";
+import { signOut } from "next-auth/react";
 import { Flex, Spin, Typography } from "antd";
 
 const { Text } = Typography;
 
-interface LoadingProps {
-  message?: string;
-}
+export default function SignoutPage() {
+  useEffect(() => {
+    signOut({ callbackUrl: "/login" });
+  }, []);
 
-export function Loading({ message = "Loading..." }: LoadingProps) {
   return (
     <Flex
       align="center"
@@ -18,7 +20,7 @@ export function Loading({ message = "Loading..." }: LoadingProps) {
       style={{ minHeight: "100vh", background: "linear-gradient(135deg, #EEEFFD 0%, #f5f6ff 100%)" }}
     >
       <Spin size="large" />
-      <Text type="secondary">{message}</Text>
+      <Text type="secondary">Signing out…</Text>
     </Flex>
   );
 }

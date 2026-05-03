@@ -1,6 +1,7 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Button, Result } from "antd";
 
 interface AccessDeniedProps {
   message?: string;
@@ -8,28 +9,30 @@ interface AccessDeniedProps {
 }
 
 export function AccessDenied({
-  message = "You don't have permission to access this page.",
+  message,
   requiredRole,
 }: AccessDeniedProps) {
-  const roleMessage =
-    requiredRole === "admin"
+  const router = useRouter();
+
+  const subTitle =
+    message ??
+    (requiredRole === "admin"
       ? "This page requires Admin privileges."
       : requiredRole === "viewer"
       ? "This page requires Viewer privileges."
-      : "";
+      : "You don't have permission to access this page.");
 
   return (
-    <div className="access-denied">
-      <div className="access-denied-icon">🚫</div>
-      <h2 className="access-denied-title">Access Denied</h2>
-      <p className="access-denied-message">
-        {message}
-        {roleMessage && <br />}
-        {roleMessage}
-      </p>
-      <Link href="/dashboard" className="sso-button" style={{ maxWidth: 200 }}>
-        Go to Dashboard
-      </Link>
-    </div>
+    <Result
+      status="403"
+      title="Access Denied"
+      subTitle={subTitle}
+      extra={
+        <Button type="primary" onClick={() => router.push("/dashboard")}>
+          Go to Dashboard
+        </Button>
+      }
+      style={{ minHeight: "60vh", display: "flex", flexDirection: "column", justifyContent: "center" }}
+    />
   );
 }

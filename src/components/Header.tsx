@@ -1,10 +1,30 @@
 "use client";
 
 import { signOut, useSession } from "next-auth/react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useSessionExpiry } from "@/hooks/useSessionExpiry";
 import { useUserRoles } from "@/hooks/useUserRoles";
+import {
+  Avatar,
+  Button,
+  Flex,
+  Layout,
+  Menu,
+  Space,
+  Tag,
+  Typography,
+  Alert,
+} from "antd";
+import {
+  DashboardOutlined,
+  EyeOutlined,
+  LogoutOutlined,
+  SafetyCertificateOutlined,
+  ThunderboltFilled,
+} from "@ant-design/icons";
+
+const { Header: AntHeader } = Layout;
+const { Text } = Typography;
 
 interface HeaderProps {
   showNav?: boolean;
@@ -13,6 +33,7 @@ interface HeaderProps {
 export function Header({ showNav = true }: HeaderProps) {
   const { data: session } = useSession();
   const pathname = usePathname();
+  const router = useRouter();
   const { isExpiringSoon, timeRemaining, handleRefresh } = useSessionExpiry();
   const { roles } = useUserRoles();
 
@@ -26,60 +47,116 @@ export function Header({ showNav = true }: HeaderProps) {
     await signOut({ callbackUrl: "/login" });
   };
 
+  const navItems = [
+    { key: "/dashboard", icon: <DashboardOutlined />, label: "Dashboard" },
+    ...((roles?.isAdmin || roles?.isViewer)
+      ? [{ key: "/view", icon: <EyeOutlined />, label: "View" }]
+      : []),
+    ...(roles?.isAdmin
+      ? [{ key: "/admin-zone/dashboard", icon: <SafetyCertificateOutlined />, label: "Admin Zone" }]
+      : []),
+  ];
+
+  const avatarLetter = session?.user?.name?.charAt(0).toUpperCase() ?? "?";
+
   return (
     <>
       {isExpiringSoon && timeRemaining && (
-        <div className="session-warning">
-          ⚠️ Your session will expire in {formatTimeRemaining(timeRemaining)}.
-          <button onClick={handleRefresh}>Extend Session</button>
-        </div>
+        <Alert
+          type="warning"
+          banner
+          message={
+            <Flex align="center" justify="center" gap={12}>
+              <span>Your session will expire in {formatTimeRemaining(timeRemaining)}.</span>
+              <Button size="small" onClick={handleRefresh}>Extend Session</Button>
+            </Flex>
+          }
+          style={{ textAlign: "center" }}
+        />
       )}
-      <header className="header">
-        <div style={{ display: "flex", alignItems: "center", gap: "2rem" }}>
-          <h1 className="header-title">SSO Portal</h1>
+      <AntHeader
+        style={{
+          background: "linear-gradient(90deg, #3d4fc4 0%, #5865DC 55%, #7b89e8 100%)",
+          padding: "0 24px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          position: "sticky",
+          top: 0,
+          zIndex: 100,
+          height: 56,
+          boxShadow: "0 2px 12px rgba(88,101,220,0.3)",
+        }}
+      >
+        <Space size={16}>
+          <Space size={10}>
+            <div
+              style={{
+                width: 28,
+                height: 28,
+                borderRadius: 8,
+                background: "rgba(255,255,255,0.2)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                border: "1px solid rgba(255,255,255,0.3)",
+              }}
+            >
+              <ThunderboltFilled style={{ color: "#fff", fontSize: 14 }} />
+            </div>
+            <Text strong style={{ fontSize: 15, color: "#fff" }}>SSO Portal</Text>
+          </Space>
+
           {showNav && (
-            <nav className="nav">
-              <Link
-                href="/dashboard"
-                className={`nav-link ${pathname === "/dashboard" ? "active" : ""}`}
-              >
-                Dashboard
-              </Link>
-              {(roles?.isAdmin || roles?.isViewer) && (
-                <Link
-                  href="/view"
-                  className={`nav-link ${pathname === "/view" ? "active" : ""}`}
-                >
-                  View
-                </Link>
-              )}
-              {roles?.isAdmin && (
-                <a
-                  href={process.env.NEXT_PUBLIC_ADMIN_ZONE_URL ?? "/admin"}
-                  className="nav-link"
-                >
-                  Admin Zone
-                </a>
-              )}
-            </nav>
+            <Menu
+              mode="horizontal"
+              theme="dark"
+              selectedKeys={[pathname]}
+              items={navItems}
+              style={{
+                background: "transparent",
+                borderBottom: "none",
+                lineHeight: "56px",
+                minWidth: 280,
+              }}
+              onClick={({ key }) => {
+                if (key.startsWith("/admin-zone")) {
+                  window.location.href = key;
+                } else {
+                  router.push(key);
+                }
+              }}
+            />
           )}
-        </div>
-        <div className="header-user">
-          <div className="user-info">
-            <div className="user-name">{session?.user?.name || "User"}</div>
-            <div className="user-email">{session?.user?.email}</div>
-          </div>
-          <div style={{ display: "flex", gap: "0.5rem" }}>
-            {roles?.isAdmin && <span className="role-badge role-admin">Admin</span>}
-            {roles?.isViewer && !roles?.isAdmin && (
-              <span className="role-badge role-viewer">Viewer</span>
-            )}
-          </div>
-          <button onClick={handleSignOut} className="logout-button">
+        </Space>
+
+        <Space size={16}>
+          {session?.user && (
+            <Space size={8}>
+              <Avatar
+                size={32}
+                style={{ background: "rgba(255,255,255,0.25)", fontSize: 13, fontWeight: 700, color: "#fff", border: "2px solid rgba(255,255,255,0.4)" }}
+              >
+                {avatarLetter}
+              </Avatar>
+              <div style={{ lineHeight: 1.4 }}>
+                <div><Text strong style={{ fontSize: 13, color: "#fff" }}>{session.user.name}</Text></div>
+                <div><Text style={{ fontSize: 11, color: "rgba(255,255,255,0.65)" }}>{session.user.email}</Text></div>
+              </div>
+            </Space>
+          )}
+          {roles?.isAdmin && <Tag color="geekblue">Admin</Tag>}
+          {roles?.isViewer && !roles.isAdmin && <Tag color="blue">Viewer</Tag>}
+          <Button
+            icon={<LogoutOutlined />}
+            size="small"
+            onClick={handleSignOut}
+            style={{ background: "rgba(255,255,255,0.15)", color: "#fff", border: "1px solid rgba(255,255,255,0.3)" }}
+          >
             Sign Out
-          </button>
-        </div>
-      </header>
+          </Button>
+        </Space>
+      </AntHeader>
     </>
   );
 }
