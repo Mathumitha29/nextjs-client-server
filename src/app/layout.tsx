@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { AuthProvider } from "@/components/providers/auth-provider";
+import { AntdRegistry } from "@/lib/antd-registry";
+import { ConfigProvider } from "antd";
 
 export const metadata: Metadata = {
   title: "SSO Application - Microsoft Entra ID",
@@ -15,7 +17,19 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <AuthProvider>{children}</AuthProvider>
+        <AntdRegistry>
+          <ConfigProvider
+            theme={{
+              token: {
+                colorPrimary: "#5865DC",
+                colorLink: "#5865DC",
+                borderRadius: 8,
+              },
+            }}
+          >
+            <AuthProvider>{children}</AuthProvider>
+          </ConfigProvider>
+        </AntdRegistry>
       </body>
     </html>
   );
